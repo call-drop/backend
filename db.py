@@ -3,10 +3,10 @@
 import psycopg2
 
 # Connect to your postgres DB
-conn = psycopg2.connect(dbname="postgres", user="user", password="password", host="temp.devmrfitz.xyz", port="7254")
+db_connection = psycopg2.connect(dbname="postgres", user="user", password="password", host="temp.devmrfitz.xyz", port="7254")
 
 # Open a cursor to perform database operations
-db_cursor = conn.cursor()
+db_cursor = db_connection.cursor()
 #
 # # Execute a query
 # db_cursor.execute("SELECT * FROM customer")
