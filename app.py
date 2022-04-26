@@ -41,7 +41,10 @@ def call_log_for_num(phn_num):
 def plan_for_num(phn_num):
     db_cursor.execute(f"")
     phone_id = db_cursor.fetchone()
-    db_cursor.execute(f"SELECT * FROM plan WHERE phone_id = SELECT id FROM phone WHERE phone_number = {phn_num}")
+    db_cursor.execute(f"SELECT * "
+                      f"FROM plan "
+                      f"INNER JOIN subscription ON plan.id = subscription.plan_id "
+                      f"WHERE subscription.phone_id IN (SELECT id FROM phone WHERE mobile_number = {phn_num})")
     plan = db_cursor.fetchone()
     return plan
 
