@@ -39,9 +39,9 @@ def call_log_for_num(phn_num):
 #     plan (phone number)
 
 def plan_for_num(phn_num):
-    db_cursor.execute(f"SELECT id FROM phone WHERE phone_number = {phn_num}")
+    db_cursor.execute(f"")
     phone_id = db_cursor.fetchone()
-    db_cursor.execute(f"SELECT * FROM plan WHERE phone_id = {phone_id}")
+    db_cursor.execute(f"SELECT * FROM plan WHERE phone_id = SELECT id FROM phone WHERE phone_number = {phn_num}")
     plan = db_cursor.fetchone()
     return plan
 
