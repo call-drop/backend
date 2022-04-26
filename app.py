@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+
 from flask import Flask, request
 
 from db import db_cursor, db_connection
@@ -62,7 +64,8 @@ def sms_log_for_num(phn_num):
     return sms_log
 
 if __name__ == '__main__':
-    app.run()
+    port = os.getenv('PORT', '8000')
+    app.run(debug=False, host='0.0.0.0', port=int(port))
 
 #
 # // ticket page
