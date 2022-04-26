@@ -38,21 +38,21 @@ def call_log_for_num(phn_num):
 
 #     plan (phone number)
 
-    def plan_for_num(phn_num):
-        db_cursor.execute(f"SELECT id FROM phone WHERE phone_number = {phn_num}")
-        phone_id = db_cursor.fetchone()
-        db_cursor.execute(f"SELECT * FROM plan WHERE phone_id = {phone_id}")
-        plan = db_cursor.fetchone()
-        return plan
+def plan_for_num(phn_num):
+    db_cursor.execute(f"SELECT id FROM phone WHERE phone_number = {phn_num}")
+    phone_id = db_cursor.fetchone()
+    db_cursor.execute(f"SELECT * FROM plan WHERE phone_id = {phone_id}")
+    plan = db_cursor.fetchone()
+    return plan
 
-    def profile_of_customer(phn_num):
-        db_cursor.execute(f"SELECT id FROM phone WHERE phone_number = {phn_num}")
-        phone_id = db_cursor.fetchone()
-        db_cursor.execute(f"SELECT * FROM customer WHERE phone_id = {phone_id}")
-        profile = db_cursor.fetchone()
-        return profile
+def profile_of_customer(phn_num):
+    db_cursor.execute(f"SELECT id FROM phone WHERE phone_number = {phn_num}")
+    phone_id = db_cursor.fetchone()
+    db_cursor.execute(f"SELECT * FROM customer WHERE phone_id = {phone_id}")
+    profile = db_cursor.fetchone()
+    return profile
 
-    def
+def
 
 if __name__ == '__main__':
     app.run()
