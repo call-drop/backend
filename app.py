@@ -30,17 +30,15 @@ def create_customer():
     return {"message": "Customer created successfully."}
 
 def call_log_for_num(phn_num):
-    db_cursor.execute(f"SELECT id FROM phone WHERE phone_number = {phn_num}")
-    phone_id = db_cursor.fetchone()
-    db_cursor.execute(f"SELECT * FROM call_log WHERE phone_id = {phone_id}")
+    db_cursor.execute(f"SELECT * "
+                      f"FROM call"
+                      f"INNER JOIN WHERE phone_id IN (SELECT id FROM phone WHERE mobile_number = {phn_num})")
     call_log = db_cursor.fetchall()
     return call_log
 
 #     plan (phone number)
 
 def plan_for_num(phn_num):
-    db_cursor.execute(f"")
-    phone_id = db_cursor.fetchone()
     db_cursor.execute(f"SELECT * "
                       f"FROM plan "
                       f"INNER JOIN subscription ON plan.id = subscription.plan_id "
@@ -49,13 +47,19 @@ def plan_for_num(phn_num):
     return plan
 
 def profile_of_customer(phn_num):
-    db_cursor.execute(f"SELECT id FROM phone WHERE phone_number = {phn_num}")
-    phone_id = db_cursor.fetchone()
-    db_cursor.execute(f"SELECT * FROM customer WHERE phone_id = {phone_id}")
+    db_cursor.execute(f"SELECT * "
+                      f"FROM customer "
+                      f"INNER JOIN phone ON customer.id = phone.owner "
+                      f"WHERE phone.mobile_number = {phn_num}")
     profile = db_cursor.fetchone()
     return profile
 
-def
+def sms_log_for_num(phn_num):
+    db_cursor.execute(f"SELECT * "
+                      f"FROM sms "
+                      f"INNER JOIN phone ON sms.phone_id IN (SELECT id FROM phone WHERE mobile_number = {phn_num})")
+    sms_log = db_cursor.fetchall()
+    return sms_log
 
 if __name__ == '__main__':
     app.run()
