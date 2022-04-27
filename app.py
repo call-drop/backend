@@ -145,6 +145,56 @@ def create_customer():
     db_cursor.execute(f"INSERT INTO customer (aadhar_number, first_name, last_name) "
                       f"VALUES ({request.json['aadhaar_number']}, '{request.json['first_name']}', '{request.json['last_name']}')")
     db_connection.commit()
+    for customer in [request.json['first_name']]:
+        db_cursor.execute(f"SELECT id from customer where aadhar_number = {request.json['aadhaar_number']}")
+        customer_id = db_cursor.fetchone()[0]
+        db_cursor.execute(f"CREATE VIEW {customer}_phone AS "
+                          f"SELECT * FROM phone WHERE owner = {customer_id}")
+        db_connection.commit()
+        db_cursor.execute(f"CREATE VIEW {customer}_data_log AS "
+                          f"SELECT * FROM data_log WHERE phone_data IN (SELECT id FROM {customer}_phone)")
+        db_connection.commit()
+        db_cursor.execute(f"CREATE VIEW {customer}_mms AS "
+                          f"SELECT * FROM mms WHERE from_id IN (SELECT id FROM {customer}_phone) OR to_id IN (SELECT id FROM {customer}_phone)")
+        db_connection.commit()
+        db_cursor.execute(f"CREATE VIEW {customer}_sms AS "
+                          f"SELECT * FROM sms WHERE from_id IN (SELECT id FROM {customer}_phone) OR to_id IN (SELECT id FROM {customer}_phone)")
+        db_connection.commit()
+        db_cursor.execute(f"CREATE VIEW {customer}_ticket AS "
+                          f"SELECT * FROM ticket WHERE raiser IN (SELECT id FROM {customer}_phone)")
+        db_connection.commit()
+        db_cursor.execute(f"CREATE VIEW {customer}_plan AS "
+                          f"SELECT * FROM plan")
+        db_connection.commit()
+        db_cursor.execute(f"CREATE VIEW {customer}_call AS "
+                          f"SELECT * FROM call WHERE from_id IN (SELECT id FROM {customer}_phone) OR to_id IN (SELECT id FROM {customer}_phone)")
+        db_connection.commit()
+        db_cursor.execute(f"CREATE VIEW {customer}_customer AS "
+                          f"SELECT * FROM customer WHERE id = {customer_id}")
+        db_connection.commit()
+        db_cursor.execute(f"CREATE VIEW {customer}_subscription AS "
+                          f"SELECT * FROM subscription WHERE phone_id IN (SELECT id FROM {customer}_phone)")
+        db_connection.commit()
+        db_cursor.execute(f"CREATE VIEW {customer}_tower AS "
+                          f"SELECT * FROM tower")
+        db_connection.commit()
+        db_cursor.execute(f"GRANT ALL ON {customer}_phone TO {customer}")
+        db_connection.commit()
+        db_cursor.execute(f"GRANT ALL ON {customer}_data_log TO {customer}")
+        db_connection.commit()
+        db_cursor.execute(f"GRANT ALL ON {customer}_mms TO {customer}")
+        db_connection.commit()
+        db_cursor.execute(f"GRANT ALL ON {customer}_sms TO {customer}")
+        db_connection.commit()
+        db_cursor.execute(f"GRANT ALL ON {customer}_ticket TO {customer}")
+        db_connection.commit()
+        db_cursor.execute(f"GRANT ALL ON {customer}_call TO {customer}")
+        db_connection.commit()
+        db_cursor.execute(f"GRANT ALL ON {customer}_customer TO {customer}")
+        db_connection.commit()
+        db_cursor.execute(f"GRANT ALL ON {customer}_subscription TO {customer}")
+        db_connection.commit()
+
     return {"message": "Customer created successfully."}
 
 @app.route('/api/phone/create', methods=['POST'])
