@@ -12,7 +12,9 @@ app = Flask(__name__)
 def list_customers():
     db_cursor.execute("SELECT * FROM customer")
     records = db_cursor.fetchall()
-    return {"data": records}
+    column_names = [desc[0] for desc in db_cursor.description]
+    result = [dict(zip(column_names, row)) for row in records]
+    return {"data": result}
 
 
 @app.route('/api/customer/list/<int:customer_id>')
