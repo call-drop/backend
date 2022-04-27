@@ -208,6 +208,7 @@ def call_log_for_num(phn_num, db_cursor, db_connection, username):
         result = [dict(zip(column_names, row)) for row in call_log]
         return {"data": result}
 
+
 @app.route('/api/plan/update/')
 @login_required
 def update_plan(db_cursor, db_connection, username, plan_id, plan_validity, plan_value, plan_cost, plan_type):
@@ -216,6 +217,7 @@ def update_plan(db_cursor, db_connection, username, plan_id, plan_validity, plan
                       f"WHERE id = {plan_id}")
     db_connection.commit()
     return {"message": "Plan updated successfully."}
+
 
 @app.route('/api/plan/list')
 @login_required
@@ -356,7 +358,7 @@ def setup_triggers():
                       BEGIN
                           n = NEW.first_name;
                           CREATE USER n WITH PASSWORD 'password';
-                          
+                          GRANT customer to n;
                           RETURN NEW;
                       END
                       $$ LANGUAGE plpgsql;"""
@@ -366,6 +368,22 @@ def setup_triggers():
                       f"AFTER INSERT ON customer FOR EACH ROW "
                       f"EXECUTE PROCEDURE customer_insert_trigger()")
     db_connection.commit()
+
+    db_cursor.execute("""CREATE OR REPLACE FUNCTION customer_delete_trigger() RETURNS TRIGGER AS $$
+                          DECLARE
+                              n varchar(255);
+                          BEGIN
+                              n = OLD.first_name;
+                              REVOKE customer from n;
+                              DROP USER n;
+                              RETURN OLD;
+                          END
+                          $$ LANGUAGE plpgsql;"""
+                      )
+    db_connection.commit()
+    db_cursor.execute(f"""CREATE TRIGGER customer_delete_trigger 
+                      AFTER DELETE ON customer FOR EACH ROW 
+                      EXECUTE PROCEDURE customer_delete_trigger()""")
 
 
 def create_indices(db_cursor, db_connection, username):
