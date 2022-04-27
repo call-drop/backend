@@ -21,7 +21,9 @@ def list_customers():
 def get_customer(customer_id):
     db_cursor.execute(f"SELECT * FROM customer WHERE id = {customer_id}")
     record = db_cursor.fetchone()
-    return {"data": record}
+    column_names = [desc[0] for desc in db_cursor.description]
+    result = dict(zip(column_names, record))
+    return {"data": result}
 
 
 @app.route('/api/customer/create', methods=['POST'])
