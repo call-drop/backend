@@ -95,7 +95,7 @@ def plan_for_num(phn_num, db_cursor, db_connection, username):
 
 @app.route('/api/phone/customer/<int:phn_num>')
 @login_required
-def profile_of_customer(phn_num, db_cursor, db_connection, username):
+def profile_of_customer(phn_num, db_cursor, db_connection, username): #on hold
     db_cursor.execute(f"SELECT * FROM phone WHERE owner IN "
                       f"(SELECT customer.id "
                       f"FROM {username}customer "
@@ -153,7 +153,7 @@ def get_all_plans(db_cursor, db_connection, username):
     else:
         column_names = [desc[0] for desc in db_cursor.description]
         result = [dict(zip(column_names, row)) for row in plans]
-        return {"data": plans}
+        return {"data": result}
 
 
 @app.route('/api/phone/data/<int:phn_num>')
@@ -168,7 +168,9 @@ def data_log_for_num(phn_num, db_cursor, db_connection, username):
     if data_log is None:
         return {"message": "No data found."}
     else:
-        return {"data": data_log}
+        column_names = [desc[0] for desc in db_cursor.description]
+        result = [dict(zip(column_names, row)) for row in data_log]
+        return {"data": result}
 
 
 @app.route('/api/phone/mms/<int:phn_num>')
@@ -197,7 +199,7 @@ def employee_profile(emp_id, db_cursor, db_connection, username):
         return {"message": "Employee not found."}
     else:
         column_names = [desc[0] for desc in db_cursor.description]
-        result = [dict(zip(column_names, row)) for row in profile]
+        result = [dict(zip(column_names, profile))]
         return {"data": result}
 
 
