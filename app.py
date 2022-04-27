@@ -63,6 +63,11 @@ def create_sms(db_cursor, db_connection, username):
     db_connection.commit()
     return {"message": "SMS created successfully."}
 
+@app.route('/api/tower/maintainence/<int:tower_id>')
+@login_required
+def change_tower_maintainence_status(tower_id, db_cursor, db_connection, username):
+    db_cursor.execute(f"UPDATE tower SET needs_maintenence = false, last_maintained = '{datetime.datetime.now()}' WHERE id = {tower_id}")
+    db_connection.commit()
 
 @app.route('/api/mms/create', methods=['POST'])
 @login_required
