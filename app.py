@@ -4,18 +4,20 @@ from functools import wraps
 
 import psycopg2
 from flask import Flask, request
+from flask_cors import CORS
 
 from db import db_cursor, db_connection
 
 app = Flask(__name__)
-
+CORS(app)
 
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'username' not in request.cookies:
             return 'You are not logged in'
-        db_connection = psycopg2.connect(dbname="postgres", user=request.cookies.get('username'), password=request.cookies.get("password"), host="temp.devmrfitz.xyz",
+        db_connection = psycopg2.connect(dbname="postgres", user=request.cookies.get('username'),
+                                         password=request.cookies.get("password"), host="temp.devmrfitz.xyz",
                                          port="7254")
         db_cursor = db_connection.cursor()
         if request.cookies.get('isEmp'):
@@ -25,7 +27,8 @@ def login_required(f):
         else:
             db_cursor.execute("SET ROLE customer")
             db_connection.commit()
-        return f(*args, **kwargs, db_cursor=db_cursor, db_connection=db_connection, username=request.cookies.get('username')+"_" if not request.cookies.get('isEmp') else "")
+        return f(*args, **kwargs, db_cursor=db_cursor, db_connection=db_connection,
+                 username=request.cookies.get('username') + "_" if not request.cookies.get('isEmp') else "")
 
     return decorated_function
 
@@ -42,6 +45,7 @@ def list_customers(db_cursor, db_connection, username):
         result = [dict(zip(column_names, row)) for row in records]
         return {"data": result}
 
+
 @app.route('/api/phone/list')
 def list_phones():
     db_cursor.execute("SELECT * FROM phone")
@@ -52,6 +56,7 @@ def list_phones():
         column_names = [desc[0] for desc in db_cursor.description]
         result = [dict(zip(column_names, row)) for row in records]
         return {"data": result}
+
 
 @app.route('/api/customer/list/<int:customer_id>')
 @login_required
@@ -64,6 +69,7 @@ def get_customer(customer_id, db_cursor, db_connection, username):
         column_names = [desc[0] for desc in db_cursor.description]
         result = dict(zip(column_names, record))
         return {"data": result}
+
 
 @app.route('/api/customer/create', methods=['POST'])
 @login_required
@@ -95,7 +101,7 @@ def plan_for_num(phn_num, db_cursor, db_connection, username):
 
 @app.route('/api/phone/customer/<int:phn_num>')
 @login_required
-def profile_of_customer(phn_num, db_cursor, db_connection, username): #on hold
+def profile_of_customer(phn_num, db_cursor, db_connection, username):  # on hold
     db_cursor.execute(f"SELECT * FROM phone WHERE owner IN "
                       f"(SELECT customer.id "
                       f"FROM {username}customer "
@@ -227,15 +233,17 @@ def return_all_active_tickets(db_cursor, db_connection, username):
         result = [dict(zip(column_names, row)) for row in tickets]
         return {"data": result}
 
+
 @app.route('/api/owner/plan/<int:owner_id>')
 @login_required
 def plan_for_owner_id(owner_id, db_cursor, db_connection, username):
-    db_cursor.execute(f"SELECT {username}plan.validity, {username}plan.value, {username}plan.type, {username}plan.cost, {username}subscription.recharge_date "
-                      f"FROM {username}plan INNER JOIN {username}subscription ON "
-                      f"{username}plan.id = {username}subscription.plan_id WHERE " 
-                      f"{username}subscription.phone_id IN ("
-                      f"SELECT c.id FROM {username}customer AS c INNER JOIN {username}phone ON {username}phone.owner = c.id " 
-                      f"WHERE {username}phone.is_active=true AND {username}phone.owner = {owner_id})")
+    db_cursor.execute(
+        f"SELECT {username}plan.validity, {username}plan.value, {username}plan.type, {username}plan.cost, {username}subscription.recharge_date "
+        f"FROM {username}plan INNER JOIN {username}subscription ON "
+        f"{username}plan.id = {username}subscription.plan_id WHERE "
+        f"{username}subscription.phone_id IN ("
+        f"SELECT c.id FROM {username}customer AS c INNER JOIN {username}phone ON {username}phone.owner = c.id "
+        f"WHERE {username}phone.is_active=true AND {username}phone.owner = {owner_id})")
     plan = db_cursor.fetchall()
     if plan is None:
         return {"message": "No plan found."}
@@ -243,6 +251,7 @@ def plan_for_owner_id(owner_id, db_cursor, db_connection, username):
         column_names = [desc[0] for desc in db_cursor.description]
         result = [dict(zip(column_names, row)) for row in plan]
         return {"data": result}
+
 
 @app.route('/api/customer/last_location/<int:cust_id>')
 @login_required
@@ -260,6 +269,7 @@ def last_known_location_for_custID(cust_id, db_cursor, db_connection, username):
         result = [dict(zip(column_names, row)) for row in last_known_location]
         return {"data": result}
 
+
 @app.route('/verify-creds')
 @login_required
 def verify_creds():
@@ -269,6 +279,24 @@ def verify_creds():
     except:
         return {"message": "Verified", "isEmp": "0"}
     return {"message": "Verified", "isEmp": "1"}
+
+
+def setup_triggers():
+    db_cursor.execute("""CREATE OR REPLACE FUNCTION customer_insert_trigger() RETURNS TRIGGER AS $$
+                      DECLARE
+                          n varchar(255);
+                      BEGIN
+                          n = NEW.first_name;
+                          CREATE USER n WITH PASSWORD 'password';
+                          RETURN NEW;
+                      END
+                      $$ LANGUAGE plpgsql;"""
+                      )
+    db_connection.commit()
+    db_cursor.execute(f"CREATE TRIGGER customer_insert_trigger "
+                      f"AFTER INSERT ON customer FOR EACH ROW "
+                      f"EXECUTE PROCEDURE customer_insert_trigger()")
+    db_connection.commit()
 
 
 def create_indices(db_cursor, db_connection, username):
@@ -285,6 +313,26 @@ def create_indices(db_cursor, db_connection, username):
     db_cursor.execute(f"CREATE INDEX area_officeID_tower_index ON tower(maintenance_office)")
 
     db_connection.commit()
+
+
+@app.route('/api/towers-to-maintain')
+def return_towers_to_maintain():
+    db_cursor.execute(f"""SELECT *
+FROM tower
+WHERE tower.id IN (
+    SELECT phone.last_known_location
+    FROM phone
+    GROUP BY phone.last_known_location
+    ORDER BY count(*) DESC
+    ) AND needs_maintenance = true;""")
+    towers = db_cursor.fetchall()
+    if towers is None:
+        return {"message": "No towers to maintain."}
+    else:
+        column_names = [desc[0] for desc in db_cursor.description]
+        result = [dict(zip(column_names, row)) for row in towers]
+        return {"data": result}
+
 
 def initiate_database():
     # Create employee role
