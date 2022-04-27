@@ -149,6 +149,13 @@ def create_customer(db_cursor, db_connection, username):
     db_connection.commit()
     return {"message": "Customer created successfully."}
 
+@app.route('/api/phone/create', methods=['POST'])
+@login_required
+def create_phone(db_cursor, db_connection, username):
+    db_cursor.execute(f"INSERT INTO {username}phone (mobile_number, is_active, is_postpaid, owner, kyc_agent, last_known_location) "
+                      f"VALUES ('{request.json['number']}', true, {request.json['is_postpaid']}, {request.json['owner']}, {request.json['kyc_agent']}, '{request.json['last_known_location']}')")
+    db_connection.commit()
+    return {"message": "Phone number linked to customer created successfully."}
 
 @app.route('/api/phone/plan/<int:phn_num>')
 @login_required
