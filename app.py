@@ -225,8 +225,40 @@ def return_all_active_tickets(db_cursor, db_connection, username):
     else:
         column_names = [desc[0] for desc in db_cursor.description]
         result = [dict(zip(column_names, row)) for row in tickets]
-        return {"data": tickets}
+        return {"data": result}
 
+@app.route('/api/owner/plan/<int:owner_id>')
+@login_required
+def plan_for_owner_id(owner_id, db_cursor, db_connection, username):
+    db_cursor.execute(f"SELECT {username}plan.validity, {username}plan.value, {username}plan.type, {username}plan.cost, {username}subscription.recharge_date "
+                      f"FROM {username}plan INNER JOIN {username}subscription ON "
+                      f"{username}plan.id = {username}subscription.plan_id WHERE " 
+                      f"{username}subscription.phone_id IN ("
+                      f"SELECT c.id FROM {username}customer AS c INNER JOIN {username}phone ON {username}phone.owner = c.id " 
+                      f"WHERE {username}phone.is_active=true AND {username}phone.owner = {owner_id})")
+    plan = db_cursor.fetchall()
+    if plan is None:
+        return {"message": "No plan found."}
+    else:
+        column_names = [desc[0] for desc in db_cursor.description]
+        result = [dict(zip(column_names, row)) for row in plan]
+        return {"data": result}
+
+@app.route('/api/customer/last_location/<int:cust_id>')
+@login_required
+def last_known_location_for_custID(cust_id, db_cursor, db_connection, username):
+    db_cursor.execute(f"SELECT phone.mobile_number, street_name "
+                      f"FROM customer AS c "
+                      f"INNER JOIN phone on phone.owner = c.id"
+                      f"INNER JOIN public.tower t on t.id = phone.last_known_location "
+                      f"where c.id = {cust_id}")
+    last_known_location = db_cursor.fetchall()
+    if last_known_location is None:
+        return {"message": "Customer not found."}
+    else:
+        column_names = [desc[0] for desc in db_cursor.description]
+        result = [dict(zip(column_names, row)) for row in last_known_location]
+        return {"data": result}
 
 @app.route('/verify-creds')
 @login_required
