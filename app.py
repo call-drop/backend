@@ -66,7 +66,7 @@ def create_sms(db_cursor, db_connection, username):
 
 @app.route('/api/mms/create', methods=['POST'])
 @login_required
-def create_sms(db_cursor, db_connection, username):
+def create_mms(db_cursor, db_connection, username):
     db_cursor.execute(f"INSERT INTO {username}mms (from_id, to_id, content, time_stamp, file_name, subject ) "
                       f"VALUES ({request.json['from_id']}, {request.json['to_name']}, {request.json['content']}, '{datetime.datetime.now()}', {request.json['file_name']}, {request.json['subject']})")
     db_connection.commit()
@@ -75,7 +75,7 @@ def create_sms(db_cursor, db_connection, username):
 
 @app.route('/api/call/create', methods=['POST'])
 @login_required
-def create_sms(db_cursor, db_connection, username):
+def create_call(db_cursor, db_connection, username):
     db_cursor.execute(f"INSERT INTO {username}call (from_id, to_id, start_time, end_time ) "
                       f"VALUES ({request.json['from_id']}, {request.json['to_name']}, '{datetime.datetime.now()}', '{datetime.datetime.now() + datetime.timedelta(seconds=int(request.json['duration']))}')")
     db_connection.commit()
