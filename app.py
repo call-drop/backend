@@ -357,6 +357,34 @@ def plan_for_owner_id(owner_id, db_cursor, db_connection, username):
         result = [dict(zip(column_names, row)) for row in plan]
         return {"data": result}
 
+@app.route('/api/profile')
+@login_required
+def return_profile(db_cursor, db_connection, username):
+    # calculate total call duration
+    db_cursor.execute(f"SELECT SUM(duration) FROM {username}call WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
+    total_call_duration = db_cursor.fetchone()[0]
+    # calculate total call count
+    db_cursor.execute(f"SELECT COUNT(*) FROM {username}call WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
+    total_call_count = db_cursor.fetchone()[0]
+    # calculate total sms count
+    db_cursor.execute(f"SELECT COUNT(*) FROM {username}sms WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
+    total_sms_count = db_cursor.fetchone()[0]
+    # calculate total data usage
+    db_cursor.execute(f"SELECT SUM(data_usage) FROM {username}data WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
+    total_data_usage = db_cursor.fetchone()[0]
+
+    # calculate average call duration per phone
+    db_cursor.execute(f"SELECT AVG(duration) "
+                      f"FROM {username}call "
+                      f"WHERE phone_id IN "
+                      f"(SELECT id "
+                      f"FROM {username}phone "
+                      f"WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
+    average_call_duration = db_cursor.fetchone()[0]
+    return {"total_call_duration": total_call_duration, "total_call_count": total_call_count, "total_sms_count": total_sms_count, "total_data_usage": total_data_usage, "average_call_duration": average_call_duration}
+
+
+
 
 @app.route('/api/customer/last_location/<int:cust_id>')
 @login_required
@@ -435,7 +463,8 @@ def create_indices(db_cursor, db_connection, username):
 
 
 @app.route('/api/towers-to-maintain')
-def return_towers_to_maintain():
+@login_required
+def return_towers_to_maintain(db_cursor, db_connection, username):
     db_cursor.execute(f"""SELECT *
     FROM tower
     WHERE tower.id IN (
@@ -455,7 +484,7 @@ def return_towers_to_maintain():
 @app.route('/api/incomplete-kyc')
 @login_required
 def get_incomplete_kyc(db_cursor, db_connection, username):
-    db_cursor.execute("""SELECT *
+    db_cursor.execute("""SELECT DISTINCT *
     FROM customer
     WHERE customer.id IN (SELECT owner
     FROM phone where phone.owner IS NULL)""")
