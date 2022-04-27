@@ -21,6 +21,8 @@ def login_required(f):
                                              password=request.cookies.get("password"), host="temp.devmrfitz.xyz",
                                              port="7254")
             db_cursor = db_connection.cursor()
+            username = request.cookies.get('username')
+            isEmp = request.cookies.get('isEmp')
             if request.cookies.get('isEmp'):
                 print("isEmp")
                 db_cursor.execute("SET ROLE employee")
@@ -33,6 +35,8 @@ def login_required(f):
                                              password=request.headers.get("password"), host="temp.devmrfitz.xyz",
                                              port="7254")
             db_cursor = db_connection.cursor()
+            username = request.headers.get('username')
+            isEmp = request.headers.get('isEmp')
             if request.headers.get('isEmp'):
                 print("isEmp")
                 db_cursor.execute("SET ROLE employee")
@@ -40,8 +44,10 @@ def login_required(f):
             else:
                 db_cursor.execute("SET ROLE customer")
                 db_connection.commit()
+        else:
+            return "You must be logged in to access this page", 401
         return f(*args, **kwargs, db_cursor=db_cursor, db_connection=db_connection,
-                 username=request.cookies.get('username') + "_" if not request.cookies.get('isEmp') else "")
+                 username=username + "_" if not isEmp else "")
 
     return decorated_function
 
