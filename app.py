@@ -219,8 +219,8 @@ def create_phone(db_cursor, db_connection, username):
 @login_required
 def plan_for_num(phn_num, db_cursor, db_connection, username):
     db_cursor.execute(f"SELECT * "
-                      f"FROM {username}plan "
-                      f"INNER JOIN {username}subscription ON {username}plan.id = {username}subscription.plan_id "
+                      f"FROM plan "
+                      f"INNER JOIN {username}subscription ON plan.id = {username}subscription.plan_id "
                       f"WHERE {username}subscription.phone_id IN (SELECT id FROM {username}phone WHERE mobile_number = {phn_num})")
     plan = db_cursor.fetchone()
     if plan is None:
@@ -284,7 +284,7 @@ def call_log_for_num(phn_num, db_cursor, db_connection, username):
 @app.route('/api/plan/update/')
 @login_required
 def update_plan(db_cursor, db_connection, username, plan_id, plan_validity, plan_value, plan_cost, plan_type):
-    db_cursor.execute(f"UPDATE {username}plan "
+    db_cursor.execute(f"UPDATE plan "
                       f"SET validity = {plan_validity}, value = {plan_value}, type = {plan_type}, cost = {plan_cost} "
                       f"WHERE id = {plan_id}")
     db_connection.commit()
@@ -294,7 +294,7 @@ def update_plan(db_cursor, db_connection, username, plan_id, plan_validity, plan
 @app.route('/api/plan/list')
 @login_required
 def get_all_plans(db_cursor, db_connection, username):
-    db_cursor.execute(f"SELECT * FROM {username}plan")
+    db_cursor.execute(f"SELECT * FROM plan")
     plans = db_cursor.fetchall()
     if plans is None:
         return {"message": "No plans found."}
@@ -355,7 +355,7 @@ def employee_profile(emp_id, db_cursor, db_connection, username):
 @login_required
 def create_plan(db_cursor, db_connection, username):
     db_cursor.execute(
-        f"INSERT INTO {username}plan (validity, value, type, cost) VALUES ({request.json('plan_validity')}, {request.json('plan_value')}, {request.json('plan_type')}, {request.json('plan_cost')})")
+        f"INSERT INTO plan (validity, value, type, cost) VALUES ({request.json('plan_validity')}, {request.json('plan_value')}, {request.json('plan_type')}, {request.json('plan_cost')})")
     db_connection.commit()
     if db_cursor.rowcount == 0:
         return {"message": "Plan not created."}
@@ -390,9 +390,9 @@ def return_all_active_tickets(db_cursor, db_connection, username):
 @login_required
 def plan_for_owner_id(owner_id, db_cursor, db_connection, username):
     db_cursor.execute(
-        f"SELECT {username}plan.validity, {username}plan.value, {username}plan.type, {username}plan.cost, {username}subscription.recharge_date "
-        f"FROM {username}plan INNER JOIN {username}subscription ON "
-        f"{username}plan.id = {username}subscription.plan_id WHERE "
+        f"SELECT plan.validity, plan.value, plan.type, plan.cost, {username}subscription.recharge_date "
+        f"FROM plan INNER JOIN {username}subscription ON "
+        f"plan.id = {username}subscription.plan_id WHERE "
         f"{username}subscription.phone_id IN ("
         f"SELECT c.id FROM {username}customer AS c INNER JOIN {username}phone ON {username}phone.owner = c.id "
         f"WHERE {username}phone.is_active=true AND {username}phone.owner = {owner_id})")
