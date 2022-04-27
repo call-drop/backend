@@ -6,6 +6,7 @@ import psycopg2
 from flask import Flask, request
 from flask_cors import CORS
 
+import db
 from db import db_cursor, db_connection
 
 app = Flask(__name__)
@@ -52,6 +53,18 @@ def list_phones():
     records = db_cursor.fetchall()
     if records is None:
         return {"message": "No phones found."}
+    else:
+        column_names = [desc[0] for desc in db_cursor.description]
+        result = [dict(zip(column_names, row)) for row in records]
+        return {"data": result}
+
+@app.route('/api/customer/phone_number_list/<int:customer_id>')
+@login_required
+def get_phone_nums_for_customer(customer_id, db_cursor, db_connection, username):
+    db.db_cursor.execute(f"SELECT * FROM {username}phone WHERE customer_id = {customer_id}")
+    records = db_cursor.fetchall()
+    if records is None:
+        return {"message": "No phone numbers found."}
     else:
         column_names = [desc[0] for desc in db_cursor.description]
         result = [dict(zip(column_names, row)) for row in records]
