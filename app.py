@@ -209,9 +209,9 @@ def call_log_for_num(phn_num, db_cursor, db_connection, username):
 
 @app.route('/api/plan/update/')
 @login_required
-def update_plan(db_cursor, db_connection, username, plan_id, plan_name, plan_price, plan_duration, plan_type):
+def update_plan(db_cursor, db_connection, username, plan_id, plan_validity, plan_value, plan_cost, plan_type):
     db_cursor.execute(f"UPDATE {username}plan "
-                      f"SET plan_name = '{plan_name}', plan_price = {plan_price}, plan_duration = {plan_duration}, plan_type = '{plan_type}' "
+                      f"SET validity = {plan_validity}, value = {plan_value}, type = {plan_type}, cost = {plan_cost} "
                       f"WHERE id = {plan_id}")
     db_connection.commit()
     return {"message": "Plan updated successfully."}
