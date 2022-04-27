@@ -104,9 +104,6 @@ def create_customer(db_cursor, db_connection, username):
     return {"message": "Customer created successfully."}
 
 
-#     plan (phone number)
-
-
 @app.route('/api/phone/plan/<int:phn_num>')
 @login_required
 def plan_for_num(phn_num, db_cursor, db_connection, username):
@@ -342,8 +339,8 @@ def create_indices(db_cursor, db_connection, username):
 @app.route('/api/towers-to-maintain')
 def return_towers_to_maintain():
     db_cursor.execute(f"""SELECT *
-FROM tower
-WHERE tower.id IN (
+    FROM tower
+    WHERE tower.id IN (
     SELECT phone.last_known_location
     FROM phone
     GROUP BY phone.last_known_location
