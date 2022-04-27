@@ -510,6 +510,17 @@ ORDER BY count(resolver) ASC LIMIT 1
                       AFTER INSERT ON ticket FOR EACH ROW 
                       EXECUTE PROCEDURE ticket_create_trigger()""")
     db_connection.commit()
+    db_cursor.execute("""CREATE OR REPLACE FUNCTION subscription_create_trigger() RETURNS TRIGGER AS $$
+                      BEGIN
+                          EXECUTE 'UPDATE phone SET is_active = true WHERE phone.id = '|| quote_ident(NEW.phone_id);
+                          RETURN NEW;
+                      END
+                      $$ LANGUAGE plpgsql;""")
+    db_connection.commit()
+    db_cursor.execute("""CREATE TRIGGER subscription_create_trigger 
+            AFTER INSERT ON subscription FOR EACH ROW 
+                      EXECUTE PROCEDURE subscription_create_trigger()""")
+    db_connection.commit()
 
 
 def create_indices(db_cursor, db_connection, username):
