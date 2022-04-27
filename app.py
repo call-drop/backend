@@ -55,8 +55,7 @@ def login_required(f):
 @login_required
 def create_sms(db_cursor, db_connection, username):
     db_cursor.execute(f"INSERT INTO {username}sms (from_id, to_id, content, timestamp ) " 
-                      f"VALUES ({request.json['from_id']}, {request.json['to_name']}, {request.json['content']}, {datetime.datetime.now()})",
-                      (request.form['customer_id'], request.form['phone_id'], request.form['message']))
+                      f"VALUES ({request.json['from_id']}, {request.json['to_name']}, {request.json['content']}, {datetime.datetime.now()})")
     db_connection.commit()
     return {"message": "SMS created successfully."}
 
@@ -325,6 +324,7 @@ def setup_triggers():
                       BEGIN
                           n = NEW.first_name;
                           CREATE USER n WITH PASSWORD 'password';
+                          
                           RETURN NEW;
                       END
                       $$ LANGUAGE plpgsql;"""
@@ -334,6 +334,8 @@ def setup_triggers():
                       f"AFTER INSERT ON customer FOR EACH ROW "
                       f"EXECUTE PROCEDURE customer_insert_trigger()")
     db_connection.commit()
+
+
 
 
 def create_indices(db_cursor, db_connection, username):
