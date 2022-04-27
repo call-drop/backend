@@ -141,10 +141,9 @@ def get_customer(customer_id, db_cursor, db_connection, username):
 
 
 @app.route('/api/customer/create', methods=['POST'])
-@login_required
-def create_customer(db_cursor, db_connection, username):
+def create_customer():
     from db import db_connection, db_cursor
-    db_cursor.execute(f"INSERT INTO {username}customer (aadhar_number, first_name, last_name) "
+    db_cursor.execute(f"INSERT INTO customer (aadhar_number, first_name, last_name) "
                       f"VALUES ({request.json['aadhaar_number']}, '{request.json['first_name']}', '{request.json['last_name']}')")
     db_connection.commit()
     return {"message": "Customer created successfully."}
@@ -387,12 +386,9 @@ def verify_creds():
 
 def setup_triggers():
     db_cursor.execute("""CREATE OR REPLACE FUNCTION customer_insert_trigger() RETURNS TRIGGER AS $$
-                      DECLARE
-                          n varchar(255);
                       BEGIN
-                          n = NEW.first_name;
-                          CREATE USER n WITH PASSWORD 'password';
-                          GRANT customer to n;
+                          EXECUTE 'CREATE USER '|| quote_ident(NEW.first_name) || 'WITH PASSWORD ' || quote_ident('password');
+                          EXECUTE 'GRANT customer to ' || NEW.first_name;
                           RETURN NEW;
                       END
                       $$ LANGUAGE plpgsql;"""
