@@ -59,7 +59,7 @@ def login_required(f):
 @login_required
 def create_sms(db_cursor, db_connection, username):
     db_cursor.execute(f"INSERT INTO {username}sms (from_id, to_id, content, time_stamp ) "
-                      f"VALUES ({request.json['from_id']}, {request.json['to_name']}, {request.json['content']}, '{datetime.datetime.now()}')")
+                      f"VALUES ({request.json['from_id']}, {request.json['to_name']}, '{request.json['content']}', '{datetime.datetime.now()}')")
     db_connection.commit()
     return {"message": "SMS created successfully."}
 
@@ -68,7 +68,8 @@ def create_sms(db_cursor, db_connection, username):
 @login_required
 def create_mms(db_cursor, db_connection, username):
     db_cursor.execute(f"INSERT INTO {username}mms (from_id, to_id, content, time_stamp, file_name, subject ) "
-                      f"VALUES ({request.json['from_id']}, {request.json['to_name']}, {request.json['content']}, '{datetime.datetime.now()}', {request.json['file_name']}, {request.json['subject']})")
+                      f"VALUES ({request.json['from_id']}, {request.json['to_name']}, '{request.json['content']}', "
+                      f"'{datetime.datetime.now()}', '{request.json['file_name']}', '{request.json['subject']}')")
     db_connection.commit()
     return {"message": "MMS created successfully."}
 
@@ -137,7 +138,7 @@ def get_customer(customer_id, db_cursor, db_connection, username):
 @login_required
 def create_customer(db_cursor, db_connection, username):
     db_cursor.execute(f"INSERT INTO {username}customer (aadhar_number, first_name, last_name) "
-                      f"VALUES ({request.json['aadhaar_number']}, {request.json['first_name']}, {request.json['last_name']})")
+                      f"VALUES ({request.json['aadhaar_number']}, '{request.json['first_name']}', '{request.json['last_name']}')")
     db_connection.commit()
     return {"message": "Customer created successfully."}
 
