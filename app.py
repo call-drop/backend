@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import datetime
 import os
 from functools import wraps
 
@@ -43,6 +44,15 @@ def login_required(f):
                  username=request.cookies.get('username') + "_" if not request.cookies.get('isEmp') else "")
 
     return decorated_function
+
+@app.route('/api/sms/create', methods=['POST'])
+@login_required
+def create_sms(db_cursor, db_connection, username):
+    db_cursor.execute(f"INSERT INTO {username}sms (from_id, to_id, content, timestamp ) " 
+                      f"VALUES ({request.json['from_id']}, {request.json['to_name']}, {request.json['content']}, {datetime.datetime.now()})",
+                      (request.form['customer_id'], request.form['phone_id'], request.form['message']))
+    db_connection.commit()
+    return {"message": "SMS created successfully."}
 
 
 @app.route('/api/customer/list')
