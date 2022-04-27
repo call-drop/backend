@@ -44,9 +44,6 @@ def login_required(f):
                 print("isEmp")
                 db_cursor.execute("SET ROLE employee")
                 db_connection.commit()
-            else:
-                db_cursor.execute("SET ROLE customer")
-                db_connection.commit()
         else:
             return "You must be logged in to access this page", 401
         return f(*args, **kwargs, db_cursor=db_cursor, db_connection=db_connection,
