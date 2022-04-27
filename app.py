@@ -156,15 +156,15 @@ def create_phone(db_cursor, db_connection, username):
     db_connection.commit()
     return {"message": "Phone number linked to customer created successfully."}
 
-@app.route('/api/phone_and_customer/create', methods=['POST'])
-@login_required
-def create_customer_phone(db_cursor, db_connection, username):
-    db_cursor.execute(f"INSERT INTO {username}customer (aadhar_number, first_name, last_name) "
-                      f"VALUES ({request.json['aadhaar_number']}, '{request.json['first_name']}', '{request.json['last_name']}')")
-    db_cursor.execute(f"INSERT INTO {username}phone (mobile_number, is_active, is_postpaid, owner, kyc_agent, last_known_location) "
-                      f"VALUES ('{request.json['number']}', true, {request.json['is_postpaid']}, SELECT id FROM {username}customer WHERE aadhar_number={request.json['aadhaar_number']}, {request.json['kyc_agent']}, '{request.json['last_known_location']}')")
-    db_connection.commit()
-    return {"message": "Customer and phone number linked to customer created successfully."}
+# @app.route('/api/phone_and_customer/create', methods=['POST'])
+# @login_required
+# def create_customer_phone(db_cursor, db_connection, username):
+#     db_cursor.execute(f"INSERT INTO {username}customer (aadhar_number, first_name, last_name) "
+#                       f"VALUES ({request.json['aadhaar_number']}, '{request.json['first_name']}', '{request.json['last_name']}')")
+#     db_cursor.execute(f"INSERT INTO {username}phone (mobile_number, is_active, is_postpaid, owner, kyc_agent, last_known_location) "
+#                       f"VALUES ('{request.json['number']}', true, {request.json['is_postpaid']}, SELECT id FROM {username}customer WHERE aadhar_number={request.json['aadhaar_number']}, {request.json['kyc_agent']}, '{request.json['last_known_location']}')")
+#     db_connection.commit()
+#     return {"message": "Customer and phone number linked to customer created successfully."}
 
 @app.route('/api/phone/plan/<int:phn_num>')
 @login_required
