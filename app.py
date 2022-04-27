@@ -299,7 +299,7 @@ def create_plan(db_cursor, db_connection, username):
 @app.route('/api/ticket/create', methods=['POST'])
 @login_required
 def create_ticket(db_cursor, db_connection, username):
-    db_cursor.execute(f"INSERT INTO {username}ticket (timestamp , status, resolver, raiser) VALUES ('{datetime.datetime.now()}', false , null , SELECT owner FROM phone WHERE mobile_number = {request.json('ticket_mobile_number')})")
+    db_cursor.execute(f"INSERT INTO {username}ticket (timestamp , status, resolver, raiser) VALUES ('{datetime.datetime.now()}', false , null , SELECT owner FROM phone WHERE mobile_number = int(request.json('ticket_mobile_number')))")
     db_connection.commit()
     if db_cursor.rowcount == 0:
         return {"message": "Ticket not created."}
