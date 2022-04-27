@@ -15,19 +15,30 @@ CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000',], supports_
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'username' not in request.cookies:
-            return 'You are not logged in'
-        db_connection = psycopg2.connect(dbname="postgres", user=request.cookies.get('username'),
-                                         password=request.cookies.get("password"), host="temp.devmrfitz.xyz",
-                                         port="7254")
-        db_cursor = db_connection.cursor()
-        if request.cookies.get('isEmp'):
-            print("isEmp")
-            db_cursor.execute("SET ROLE employee")
-            db_connection.commit()
-        else:
-            db_cursor.execute("SET ROLE customer")
-            db_connection.commit()
+        if 'username' in request.cookies:
+            db_connection = psycopg2.connect(dbname="postgres", user=request.cookies.get('username'),
+                                             password=request.cookies.get("password"), host="temp.devmrfitz.xyz",
+                                             port="7254")
+            db_cursor = db_connection.cursor()
+            if request.cookies.get('isEmp'):
+                print("isEmp")
+                db_cursor.execute("SET ROLE employee")
+                db_connection.commit()
+            else:
+                db_cursor.execute("SET ROLE customer")
+                db_connection.commit()
+        elif 'username' in request.headers:
+            db_connection = psycopg2.connect(dbname="postgres", user=request.headers.get('username'),
+                                             password=request.headers.get("password"), host="temp.devmrfitz.xyz",
+                                             port="7254")
+            db_cursor = db_connection.cursor()
+            if request.headers.get('isEmp'):
+                print("isEmp")
+                db_cursor.execute("SET ROLE employee")
+                db_connection.commit()
+            else:
+                db_cursor.execute("SET ROLE customer")
+                db_connection.commit()
         return f(*args, **kwargs, db_cursor=db_cursor, db_connection=db_connection,
                  username=request.cookies.get('username') + "_" if not request.cookies.get('isEmp') else "")
 
