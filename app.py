@@ -452,6 +452,20 @@ def return_towers_to_maintain():
         result = [dict(zip(column_names, row)) for row in towers]
         return {"data": result}
 
+@app.route('/api/incomplete-kyc')
+@login_required
+def get_incomplete_kyc(db_cursor, db_connection, username):
+    db_cursor.execute("""SELECT *
+    FROM customer
+    WHERE customer.id IN (SELECT owner
+    FROM phone where phone.owner IS NULL)""")
+    incomplete_kyc = db_cursor.fetchall()
+    if incomplete_kyc is None:
+        return {"message": "No incomplete KYC."}
+    else:
+        column_names = [desc[0] for desc in db_cursor.description]
+        result = [dict(zip(column_names, row)) for row in incomplete_kyc]
+        return {"data": result}
 
 def initiate_database():
     # Create employee role
