@@ -271,7 +271,20 @@ def verify_creds():
     return {"message": "Verified", "isEmp": "1"}
 
 
+def create_indices(db_cursor, db_connection, username):
+    db_cursor.execute(f"CREATE INDEX phone_index ON phone(mobile_number)")
+    db_cursor.execute(f"CREATE INDEX plan_index ON plan(validity)")
+    db_cursor.execute(f"CREATE INDEX subscription_plan_phone_index ON subscription(phone_id, plan_id)")
+    db_cursor.execute(f"CREATE INDEX ticket_index ON ticket (status)")
+    db_cursor.execute(f"CREATE INDEX from_to_call_index ON call (from_id, to_id)")
+    db_cursor.execute(f"CREATE INDEX from_to_mms_index ON mms (from_id, to_id)")
+    db_cursor.execute(f"CREATE INDEX from_to_sms_index ON sms (from_id, to_id)")
+    db_cursor.execute(f"CREATE INDEX phone_owner_index ON phone (owner)")
+    db_cursor.execute(f"CREATE INDEX works_at_employee_index ON employee(works_at)")
+    db_cursor.execute(f"CREATE INDEX phone_data_datalog_index ON data_log(phone_id)")
+    db_cursor.execute(f"CREATE INDEX area_officeID_tower_index ON tower(maintenance_office)")
 
+    db_connection.commit()
 
 def initiate_database():
     # Create employee role
