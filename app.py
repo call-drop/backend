@@ -56,7 +56,7 @@ def login_required(f):
 @login_required
 def create_sms(db_cursor, db_connection, username):
     db_cursor.execute(f"INSERT INTO {username}sms (from_id, to_id, content, time_stamp ) "
-                      f"VALUES ({request.json['from_id']}, {request.json['to_name']}, '{request.json['content']}', '{datetime.datetime.now()}')")
+                      f"VALUES ((SELECT id FROM phone_ref_view WHERE mobile_number={request.json['from_id']}), (SELECT id FROM phone_ref_view WHERE mobile_number={request.json['to_name']}), '{request.json['content']}', '{datetime.datetime.now()}')")
     db_connection.commit()
     return {"message": "SMS created successfully."}
 
@@ -71,7 +71,7 @@ def change_tower_maintenance_status(tower_id, db_cursor, db_connection, username
 @login_required
 def create_mms(db_cursor, db_connection, username):
     db_cursor.execute(f"INSERT INTO {username}mms (from_id, to_id, content, time_stamp, file_name, subject ) "
-                      f"VALUES ({request.json['from_id']}, {request.json['to_name']}, '{request.json['content']}', "
+                      f"VALUES ((SELECT id FROM phone_ref_view WHERE mobile_number={request.json['from_id']}), (SELECT id FROM phone_ref_view WHERE mobile_number={request.json['to_name']}), '{request.json['content']}', "
                       f"'{datetime.datetime.now()}', '{request.json['file_name']}', '{request.json['subject']}')")
     db_connection.commit()
     return {"message": "MMS created successfully."}
@@ -81,7 +81,7 @@ def create_mms(db_cursor, db_connection, username):
 @login_required
 def create_call(db_cursor, db_connection, username):
     db_cursor.execute(f"INSERT INTO {username}call (from_id, to_id, start_time, end_time ) "
-                      f"VALUES ({request.json['from_id']}, {request.json['to_name']}, '{datetime.datetime.now()}', '{datetime.datetime.now() + datetime.timedelta(seconds=int(request.json['duration']))}')")
+                      f"VALUES ((SELECT id FROM phone_ref_view WHERE mobile_number={request.json['from_id']}), (SELECT id FROM phone_ref_view WHERE mobile_number={request.json['to_name']}), '{datetime.datetime.now()}', '{datetime.datetime.now() + datetime.timedelta(seconds=int(request.json['duration']))}')")
     db_connection.commit()
     return {"message": "Call created successfully."}
 
@@ -491,6 +491,25 @@ def setup_triggers():
     db_cursor.execute(f"""CREATE TRIGGER customer_delete_trigger 
                       AFTER DELETE ON customer FOR EACH ROW 
                       EXECUTE PROCEDURE customer_delete_trigger()""")
+    db_connection.commit()
+
+    db_cursor.execute("""CREATE OR REPLACE FUNCTION ticket_create_trigger() RETURNS TRIGGER AS $$
+                      BEGIN
+                          EXECUTE 'UPDATE ticket SET resolver = (
+    SELECT resolver
+FROM ticket
+WHERE resolver IS NOT NULL
+GROUP BY resolver
+ORDER BY count(resolver) ASC LIMIT 1
+    ) WHERE id = '|| quote_ident(NEW.id);
+                          RETURN NEW;
+                      END
+                      $$ LANGUAGE plpgsql;""")
+    db_connection.commit()
+    db_cursor.execute("""CREATE TRIGGER ticket_create_trigger 
+                      AFTER INSERT ON ticket FOR EACH ROW 
+                      EXECUTE PROCEDURE ticket_create_trigger()""")
+    db_connection.commit()
 
 
 def create_indices(db_cursor, db_connection, username):
