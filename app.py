@@ -72,7 +72,7 @@ def list_phones():
 @app.route('/api/customer/phone_number_list/<int:customer_id>')
 @login_required
 def get_phone_nums_for_customer(customer_id, db_cursor, db_connection, username):
-    db.db_cursor.execute(f"SELECT * FROM {username}phone WHERE id = {customer_id}")
+    db.db_cursor.execute(f"SELECT * FROM {username}phone WHERE owner = {customer_id}")
     records = db_cursor.fetchall()
     if records is None:
         return {"message": "No phone numbers found."}
