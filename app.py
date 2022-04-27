@@ -143,6 +143,7 @@ def get_customer(customer_id, db_cursor, db_connection, username):
 @app.route('/api/customer/create', methods=['POST'])
 @login_required
 def create_customer(db_cursor, db_connection, username):
+    from db import db_connection, db_cursor
     db_cursor.execute(f"INSERT INTO {username}customer (aadhar_number, first_name, last_name) "
                       f"VALUES ({request.json['aadhaar_number']}, '{request.json['first_name']}', '{request.json['last_name']}')")
     db_connection.commit()
