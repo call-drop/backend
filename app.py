@@ -11,7 +11,7 @@ import db
 from db import db_cursor, db_connection
 
 app = Flask(__name__)
-CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000',], supports_credentials=True)
+CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'https://calldrop.netlify.app'], supports_credentials=True)
 
 def login_required(f):
     @wraps(f)
