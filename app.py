@@ -54,7 +54,7 @@ def login_required(f):
 
 @app.route('/api/sms/create', methods=['POST'])
 @login_required
-def create_sms(db_cursor, db_connection, username):
+def create_sms(db_cursor, db_connection, username): #on hold
     db_cursor.execute(f"INSERT INTO {username}sms (from_id, to_id, content, time_stamp ) "
                       f"VALUES ((SELECT id FROM phone_ref_view WHERE mobile_number={request.json['from_id']}), (SELECT id FROM phone_ref_view WHERE mobile_number={request.json['to_name']}), '{request.json['content']}', '{datetime.datetime.now()}')")
     db_connection.commit()
@@ -114,7 +114,7 @@ def list_phones():
 @app.route('/api/customer/phone_number_list/<int:customer_id>')
 @login_required
 def get_phone_nums_for_customer(customer_id, db_cursor, db_connection, username):
-    db.db_cursor.execute(f"SELECT * FROM {username}phone WHERE owner = {customer_id}")
+    db_cursor.execute(f"SELECT * FROM {username}phone WHERE owner = {customer_id}")
     records = db_cursor.fetchall()
     if records is None:
         return {"message": "No phone numbers found."}
@@ -233,7 +233,7 @@ def plan_for_num(phn_num, db_cursor, db_connection, username):
 
 @app.route('/api/phone/customer/<int:phn_num>')
 @login_required
-def profile_of_customer(phn_num, db_cursor, db_connection, username):  # on hold
+def profile_of_customer(phn_num, db_cursor, db_connection, username):
     db_cursor.execute(f"SELECT * FROM phone WHERE owner IN "
                       f"(SELECT customer.id "
                       f"FROM {username}customer "
@@ -365,7 +365,6 @@ def create_plan(db_cursor, db_connection, username):
 @app.route('/api/ticket/create', methods=['POST'])
 @login_required
 def create_ticket(db_cursor, db_connection, username):
-    print(f"INSERT INTO {username}ticket (timestamp , status, resolver, raiser) VALUES ('{datetime.datetime.now()}', false , null , (SELECT owner FROM phone WHERE mobile_number = {request.json['ticket_mobile_number']}))")
     db_cursor.execute(f"INSERT INTO {username}ticket (timestamp , status, resolver, raiser) VALUES ('{datetime.datetime.now()}', false , null , (SELECT owner FROM phone WHERE mobile_number = {request.json['ticket_mobile_number']}))")
     db_connection.commit()
     if db_cursor.rowcount == 0:
@@ -454,7 +453,7 @@ def last_known_location_for_custID(cust_id, db_cursor, db_connection, username):
 @login_required
 def verify_creds():
     try:
-        db_cursor.execute(f"SELECT * FROM employee");
+        db_cursor.execute(f"SELECT * FROM employee")
         db_cursor.fetchall()
     except:
         return {"message": "Verified", "isEmp": "0"}
