@@ -600,6 +600,59 @@ def set_kyc_agent(cust_id, db_cursor, db_connection, username):
     return {"message": "KYC agent set."}
 
 
+@app.route('/api/get-running-calls/<string:start_time>/<string:end_time>', methods=['GET'])
+@login_required
+def get_running_calls(start_time, end_time, db_cursor, db_connection, username):
+    start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    db_cursor.execute(f"""SELECT *
+    FROM call
+    WHERE call.start_time >= '{start_time}' AND call.start_time <= '{end_time}'
+    """)
+    running_calls = db_cursor.fetchall()
+    # Get average call duration
+    db_cursor.execute(f"""SELECT AVG(call.end_time - call.start_time)
+    FROM call
+    WHERE call.start_time >= '{start_time}' AND call.start_time <= '{end_time}'
+    """)
+    avg_call_duration = db_cursor.fetchall()
+    if running_calls is None:
+        return {"message": "No calls in that time period."}
+    else:
+        return {"data": running_calls, "avg_call_duration": avg_call_duration}
+
+
+@app.route('/api/get-analytics/<int:num>')
+@login_required
+def get_analytics(num, db_cursor, db_connection, username):
+    db_cursor.execute(f"""WITH RECURSIVE callers AS (
+        SELECT
+            from_id, to_id
+        FROM
+            call
+        WHERE
+            from_id = {num}
+        UNION
+            SELECT
+                e.from_id,
+                e.to_id
+            FROM
+                call e
+            INNER JOIN callers s ON s.from_id = e.to_id
+    ) SELECT
+        *
+    FROM
+        callers;
+    """)
+    callers = db_cursor.fetchall()
+    if callers is None:
+        return {"message": "No callers."}
+    else:
+        column_names = [desc[0] for desc in db_cursor.description]
+        result = [dict(zip(column_names, row)) for row in callers]
+        return {"data": result}
+
+
 def initiate_database():
     # Create employee role
     db_cursor.execute("CREATE ROLE employee")
@@ -631,8 +684,8 @@ def initiate_database():
         db_cursor.execute(f"CREATE VIEW {customer}_mms AS "
                           f"SELECT * FROM mms WHERE from_id IN (SELECT id FROM {customer}_phone) OR to_id IN (SELECT id FROM {customer}_phone)")
         db_connection.commit()
-        db_cursor.execute(f"CREATE VIEW {customer}_sms AS "
-                          f"SELECT * FROM sms WHERE from_id IN (SELECT id FROM {customer}_phone) OR to_id IN (SELECT id FROM {customer}_phone)")
+        db_cursor.execute(f"""CREATE VIEW {customer}_sms AS
+                          SELECT * FROM sms WHERE from_id IN (SELECT id FROM {customer}_phone) OR to_id IN (SELECT id FROM {customer}_phone)""")
         db_connection.commit()
         db_cursor.execute(f"CREATE VIEW {customer}_ticket AS "
                           f"SELECT * FROM ticket WHERE raiser IN (SELECT id FROM {customer}_phone)")
