@@ -60,12 +60,15 @@ def create_sms(db_cursor, db_connection, username): #on hold
     db_connection.commit()
     return {"message": "SMS created successfully."}
 
+
 @app.route('/api/tower/maintainence/<int:tower_id>')
 @login_required
 def change_tower_maintenance_status(tower_id, db_cursor, db_connection, username):
-    db_cursor.execute(f"UPDATE tower SET needs_maintenance = false, last_maintained = '{datetime.datetime.now()}' WHERE id = {tower_id}")
+    db_cursor.execute(
+        f"UPDATE tower SET needs_maintenance = false, last_maintained = '{datetime.datetime.now()}' WHERE id = {tower_id}")
     db_connection.commit()
     return {"message": "Tower Maintenance status changed successfully."}
+
 
 @app.route('/api/mms/create', methods=['POST'])
 @login_required
@@ -141,7 +144,7 @@ def get_customer(customer_id, db_cursor, db_connection, username):
 def create_customer():
     from db import db_connection, db_cursor
     print(f"INSERT INTO customer (aadhar_number, first_name, last_name) "
-                      f"VALUES ({request.json['aadhaar_number']}, '{request.json['first_name']}', '{request.json['last_name']}')")
+          f"VALUES ({request.json['aadhaar_number']}, '{request.json['first_name']}', '{request.json['last_name']}')")
     db_cursor.execute(f"INSERT INTO customer (aadhar_number, first_name, last_name) "
                       f"VALUES ({request.json['aadhaar_number']}, '{request.json['first_name']}', '{request.json['last_name']}')")
     db_connection.commit()
@@ -197,13 +200,16 @@ def create_customer():
 
     return {"message": "Customer created successfully."}
 
+
 @app.route('/api/phone/create', methods=['POST'])
 @login_required
 def create_phone(db_cursor, db_connection, username):
-    db_cursor.execute(f"INSERT INTO {username}phone (mobile_number, is_active, is_postpaid, owner, last_known_location) "
-                      f"VALUES ({request.json['number']}, true, {request.json['is_postpaid']}, {request.json['owner']}, {request.json['last_known_location']})")
+    db_cursor.execute(
+        f"INSERT INTO {username}phone (mobile_number, is_active, is_postpaid, owner, last_known_location) "
+        f"VALUES ({request.json['number']}, true, {request.json['is_postpaid']}, {request.json['owner']}, {request.json['last_known_location']})")
     db_connection.commit()
     return {"message": "Phone number linked to customer created successfully."}
+
 
 # @app.route('/api/phone_and_customer/create', methods=['POST'])
 # @login_required
@@ -362,15 +368,19 @@ def create_plan(db_cursor, db_connection, username):
     else:
         return {"message": "Plan created successfully."}
 
+
 @app.route('/api/ticket/create', methods=['POST'])
 @login_required
 def create_ticket(db_cursor, db_connection, username):
-    db_cursor.execute(f"INSERT INTO {username}ticket (timestamp , status, resolver, raiser) VALUES ('{datetime.datetime.now()}', false , null , (SELECT owner FROM phone WHERE mobile_number = {request.json['ticket_mobile_number']}))")
+
+    db_cursor.execute(
+        f"INSERT INTO {username}ticket (timestamp , status, resolver, raiser) VALUES ('{datetime.datetime.now()}', false , null , (SELECT owner FROM phone WHERE mobile_number = {request.json['ticket_mobile_number']}))")
     db_connection.commit()
     if db_cursor.rowcount == 0:
         return {"message": "Ticket not created."}
     else:
         return {"message": "Ticket created successfully."}
+
 
 @app.route('/api/tickets/list')
 @login_required
@@ -403,20 +413,25 @@ def plan_for_owner_id(owner_id, db_cursor, db_connection, username):
         result = [dict(zip(column_names, row)) for row in plan]
         return {"data": result}
 
+
 @app.route('/api/profile')
 @login_required
 def return_profile(db_cursor, db_connection, username):
     # calculate total call duration
-    db_cursor.execute(f"SELECT SUM(duration) FROM {username}call WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
+    db_cursor.execute(
+        f"SELECT SUM(duration) FROM {username}call WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
     total_call_duration = db_cursor.fetchone()[0]
     # calculate total call count
-    db_cursor.execute(f"SELECT COUNT(*) FROM {username}call WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
+    db_cursor.execute(
+        f"SELECT COUNT(*) FROM {username}call WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
     total_call_count = db_cursor.fetchone()[0]
     # calculate total sms count
-    db_cursor.execute(f"SELECT COUNT(*) FROM {username}sms WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
+    db_cursor.execute(
+        f"SELECT COUNT(*) FROM {username}sms WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
     total_sms_count = db_cursor.fetchone()[0]
     # calculate total data usage
-    db_cursor.execute(f"SELECT SUM(data_usage) FROM {username}data WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
+    db_cursor.execute(
+        f"SELECT SUM(data_usage) FROM {username}data WHERE phone_id IN (SELECT id FROM {username}phone WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
     total_data_usage = db_cursor.fetchone()[0]
 
     # calculate average call duration per phone
@@ -427,9 +442,9 @@ def return_profile(db_cursor, db_connection, username):
                       f"FROM {username}phone "
                       f"WHERE owner = (SELECT id FROM {username}customer WHERE username = '{username[:-1]}'))")
     average_call_duration = db_cursor.fetchone()[0]
-    return {"total_call_duration": total_call_duration, "total_call_count": total_call_count, "total_sms_count": total_sms_count, "total_data_usage": total_data_usage, "average_call_duration": average_call_duration}
-
-
+    return {"total_call_duration": total_call_duration, "total_call_count": total_call_count,
+            "total_sms_count": total_sms_count, "total_data_usage": total_data_usage,
+            "average_call_duration": average_call_duration}
 
 
 @app.route('/api/customer/last_location/<int:cust_id>')
@@ -517,7 +532,7 @@ ORDER BY count(resolver) ASC LIMIT 1
                       $$ LANGUAGE plpgsql;""")
     db_connection.commit()
     db_cursor.execute("""CREATE TRIGGER subscription_create_trigger 
-            AFTER INSERT ON subscription FOR EACH ROW 
+                      AFTER INSERT ON subscription FOR EACH ROW 
                       EXECUTE PROCEDURE subscription_create_trigger()""")
     db_connection.commit()
 
@@ -557,13 +572,14 @@ def return_towers_to_maintain(db_cursor, db_connection, username):
         result = [dict(zip(column_names, row)) for row in towers]
         return {"data": result}
 
+
 @app.route('/api/incomplete-kyc')
 @login_required
 def get_incomplete_kyc(db_cursor, db_connection, username):
     db_cursor.execute("""SELECT DISTINCT *
     FROM customer
     WHERE customer.id IN (SELECT owner
-    FROM phone where phone.owner IS NULL)""")
+    FROM phone where phone.kyc_agent IS NULL)""")
     incomplete_kyc = db_cursor.fetchall()
     if incomplete_kyc is None:
         return {"message": "No incomplete KYC."}
@@ -571,6 +587,7 @@ def get_incomplete_kyc(db_cursor, db_connection, username):
         column_names = [desc[0] for desc in db_cursor.description]
         result = [dict(zip(column_names, row)) for row in incomplete_kyc]
         return {"data": result}
+
 
 def initiate_database():
     # Create employee role
