@@ -54,7 +54,7 @@ def login_required(f):
 
 @app.route('/api/sms/create', methods=['POST'])
 @login_required
-def create_sms(db_cursor, db_connection, username): #on hold
+def create_sms(db_cursor, db_connection, username):  # on hold
     db_cursor.execute(f"INSERT INTO {username}sms (from_id, to_id, content, time_stamp ) "
                       f"VALUES ((SELECT id FROM phone_ref_view WHERE mobile_number={request.json['from_id']}), (SELECT id FROM phone_ref_view WHERE mobile_number={request.json['to_name']}), '{request.json['content']}', '{datetime.datetime.now()}')")
     db_connection.commit()
@@ -372,7 +372,6 @@ def create_plan(db_cursor, db_connection, username):
 @app.route('/api/ticket/create', methods=['POST'])
 @login_required
 def create_ticket(db_cursor, db_connection, username):
-
     db_cursor.execute(
         f"INSERT INTO {username}ticket (timestamp , status, resolver, raiser) VALUES ('{datetime.datetime.now()}', false , null , (SELECT owner FROM phone WHERE mobile_number = {request.json['ticket_mobile_number']}))")
     db_connection.commit()
@@ -587,6 +586,18 @@ def get_incomplete_kyc(db_cursor, db_connection, username):
         column_names = [desc[0] for desc in db_cursor.description]
         result = [dict(zip(column_names, row)) for row in incomplete_kyc]
         return {"data": result}
+
+
+@app.route('/api/set-kyc-agent/<int:cust_id>', methods=['POST'])
+@login_required
+def set_kyc_agent(cust_id, db_cursor, db_connection, username):
+    db_cursor.execute(f"""UPDATE phone
+    SET kyc_agent = (SELECT id
+    FROM employee
+    WHERE employee.first_name = '{username}')
+    WHERE phone.owner = {cust_id};""")
+    db_connection.commit()
+    return {"message": "KYC agent set."}
 
 
 def initiate_database():
